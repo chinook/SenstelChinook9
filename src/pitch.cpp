@@ -15,7 +15,7 @@ float calc_pitch_angle_wheelRPM(float vehicle_speed) // speed in m/s
 {
   // TODO: Algo de Miclaye
   return -(vehicle_speed <= 2.25) ? 6.9 :
-          ((vehicle_speed >= 9.0) ? 0 :j
+          ((vehicle_speed >= 9.0) ? 0 :
           ((0.00213626 * pow(vehicle_speed, 6.0)) -
           (0.07624901 * pow(vehicle_speed, 5.0)) +
           (1.10673884 * pow(vehicle_speed, 4.0)) -

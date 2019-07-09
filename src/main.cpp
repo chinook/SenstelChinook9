@@ -357,6 +357,7 @@ void main_data_out()
 void WriteDataToCAN()
 {
     static int dummy_zero = 0;
+    unsigned can_success = 1;
 
     // Dummy values to test the steering wheel dsiplays
     sensors.gear = 2;
@@ -372,38 +373,42 @@ void WriteDataToCAN()
     //pc.printf("CAN\r\n");
 
     // Gear
-    can.write(CANMessage(GEAR_CAN_ID, (char*)&sensors.gear, 1));
-    wait_us(100);
+    can_success &= can.write(CANMessage(GEAR_CAN_ID, (char*)&sensors.gear, 1));
+    wait_us(200);
     // Pitch
+
     float pitch_angle = (3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch);
     //pitch_angle = 15.6f;
-    can.write(CANMessage(PITCH_CAN_ID, (char*)&pitch_angle, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(PITCH_CAN_ID, (char*)&pitch_angle, 4));
+    wait_us(200);
+
+
     // Mast dir + Mast mode
     // TODO
     // Calib done
     // TODO
     // Rotor RPM
-    can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)&sensors.rpm_rotor, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)&sensors.rpm_rotor, 4));
+    wait_us(200);
     // Wind Speed
-    can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
+    wait_us(200);
     // Current + Voltage
-    can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
+    wait_us(200);
     // Voltage
-    can.write(CANMessage(VOLTAGE_CAN_ID, (char*)&dummy_zero, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(VOLTAGE_CAN_ID, (char*)&dummy_zero, 4));
+    wait_us(200);
     // Wheel RPM
-    can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
+    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
     wait_us(200);
     // Wind dir
     //unsigned int wind_dir = (unsigned int)(sensors.wind_direction);
 
-    //can.write(CANMessage(0x20, (char*)(&sensors.wind_direction), 4));
+    //can_success &= can.write(CANMessage(0x20, (char*)(&sensors.wind_direction), 4));
     wait_us(200);
     //wait_us(2000);
+
 
     // Acq Stat
     // TODO
@@ -428,26 +433,35 @@ void WriteDataToCAN()
     {
       // Close angle adjustment at 4secs frequency
       pot_value = 0.0f;
-      can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-      wait_us(100);
+      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+      wait_us(200);
     }
     else if(delta_wind >= 20.0)
     {
       // Wide angle adjustment as fast as possible
       pot_value = 15.0 * direction;
-      can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-      wait_us(100);
+      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+      wait_us(200);
     }
 
     last_time_us = current_time_us;
-    wait_us(100);
+    wait_us(200);
+
+
 
     // Loadcell
-    can.write(CANMessage(LOADCELL_CAN_ID, (char*)&sensors.loadcell, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)&sensors.loadcell, 4));
+    wait_us(200);
     // Torque
-    can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
-    wait_us(100);
+    can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
+    wait_us(200);
+
+    //pc.printf("can success = %d\n\r", can_success);
+
+    unsigned char errors = can.tderror();
+    //pc.printf("num write errors = %d\n\r", errors);
+    if(errors)
+      can.reset();
 }
 
 void WriteDataToUART(char id, SendData data)
@@ -586,7 +600,7 @@ int main()
             // CAN polling
             //
             // TODO: Find a better place (and better way ?) for CAN
-            static CANMessage msg;
+            /*static CANMessage msg;
             if(can.read(msg))
             {
               if(msg.id == 0x39)
@@ -600,6 +614,7 @@ int main()
                 pitch::pitch_done = true;
               }
             }
+            */
 
             // *** PITCH AUTO ***
             //
