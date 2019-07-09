@@ -610,7 +610,7 @@ int main()
             float pitch_target = 0.0f;
             //if(pitch_valid)
             //{
-              pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels);
+              //pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels);
             //}
             pitch_target_algo = pitch_target;
 
