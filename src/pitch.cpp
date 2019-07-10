@@ -14,7 +14,7 @@ namespace pitch
 float calc_pitch_angle_wheelRPM(float vehicle_speed) // speed in m/s
 {
   // TODO: Algo de Miclaye
-  return -(vehicle_speed <= 2.25) ? 6.9 :
+  return  (vehicle_speed <= 2.25) ? 6.9 :
           ((vehicle_speed >= 9.0) ? 0 :
           ((0.00213626 * pow(vehicle_speed, 6.0)) -
           (0.07624901 * pow(vehicle_speed, 5.0)) +
@@ -54,7 +54,7 @@ void SendPitchAngleCmd(float current_pitch, float target_pitch_blades)
   // Set a maximum to the number of steps so that we don't overshoot too much
   // Plus, its safer in case of angle error
   if(nb_steps > 300) nb_steps = 300;
-
+  nb_steps *= -1;
   // TODO: Add checks and validation of steps
 
   // Send the command to the stepper drive
@@ -103,6 +103,7 @@ void SendROPSCmd(float current_pitch, bool ROPS)
     const float angle_mov_per_step = 1.8f / 293.89f;
     float nb_steps = (float)((int)(delta_pitch_angle_encodeur / angle_mov_per_step));
     if(nb_steps > 300) nb_steps = 300;
+    nb_steps *= -1;
     ROPS_data.drapeau_steps = nb_steps;
     ROPS_data.brops = 1;
 
