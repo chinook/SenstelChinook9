@@ -194,8 +194,12 @@ void ws_acquisition()
                     memcpy(wind_spd, trame + 15, 5);
 
                     sensors.wind_direction = atof(wind_dir);
-                    sensors.wind_direction -= 180;
-                    sensors.wind_direction *= -1;
+                    sensors.wind_direction = (sensors.wind_direction > 180) ? sensors.wind_direction -360: sensors.wind_direction;
+                    //sensors.wind_direction *= -1;
+	                /*if (sensors.wind_direction < 0)
+		                sensors.wind_direction = 180 - sensors.wind_direction;
+	                else if (sensors.wind_direction >= 0)
+		                sensors.wind_direction = -(180 + sensors.wind_direction);*/
                     sensors.wind_speed = atof(wind_spd);
 
                     wind_directions[wind_index] = sensors.wind_direction;
@@ -363,7 +367,7 @@ void WriteDataToCAN()
     sensors.gear = 2;
     //sensors.pitch = PITCH_DRAPEAU;
     sensors.rpm_rotor = 708.0f;
-    sensors.wind_speed = 11.5f;
+    //sensors.wind_speed = 11.5f;
     //sensors.current = 2.3;
     //sensors.voltage = 22.1;
     //sensors.rpm_wheels = pitch_target_algo;
@@ -425,27 +429,69 @@ void WriteDataToCAN()
     float direction = (sensors.wind_direction >= 0) ? 1.0 : -1.0;
     float delta_wind_avg = abs(wind_direction_avg);
     float direction_avg = (wind_direction_avg >= 0) ? 1.0 : -1.0;
-
+	
+	// Only send mast auto command if wind is above 2 knots
+	float pot_value = 0.0f;
+	if(sensors.wind_speed > 2.0)
+	{
+		if (abs(sensors.wind_direction) < 10.0)
+		{
+			// wind direction absolute < 10.0 degs
+		}
+		else
+		{
+			// wind direction absolute > 10.0 degs
+			 pot_value = 15.0 * direction;
+		}
+	}
+	// Send control to the mast
+	pot_value = 6.0;
+	can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+	wait_us(200);
+	
+	/*
     // Calculate pot angle
     float pot_value = 0.0f;
     // 2 cas : delta_wind < 5
-    if(delta_wind < 20.0)
+    if(delta_wind < 10.0 && delta_wind_avg < 5)
     {
-      // Close angle adjustment at 4secs frequency
-      pot_value = 0.0f;
+	    static int cnt = 0;
+	    ++cnt;
+	    if (cnt % 3 != 0)
+	    {	
+		    if (delta_wind >= 5.0)
+		    {
+			    pot_value = 15.0 * direction;
+			    can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));			    
+		    }		    
+	    }
+	    else
+	    {
+		    // Close angle adjustment at 4secs frequency
+		    pot_value = 0.0f;
+		    can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+		    wait_us(200);
+	    }
+    }
+    else if(delta_wind >= 10.0 || delta_wind_avg >= 5) && sensors.wind_speed >= 2.0)
+    {
+	    // Wide angle adjustment as fast as possible
+	  pot_value = 15.0 * direction;
       can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
       wait_us(200);
     }
-    else if(delta_wind >= 20.0)
-    {
-      // Wide angle adjustment as fast as possible
-      pot_value = 15.0 * direction;
-      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-      wait_us(200);
-    }
+	else
+	{
+		// Close angle adjustment at 4secs frequency
+		pot_value = 0.0f;
+		can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+		wait_us(200);
+	}
+	
 
     last_time_us = current_time_us;
     wait_us(200);
+	*/
 
 
 
