@@ -39,7 +39,7 @@
 #define LOADCELL_CAN_ID 14
 #define TORQUE_CAN_ID 15
 
-#define MAX_TURB_RPM_VALUE 100
+#define MAX_TURB_RPM_VALUE 1100
 
 // LEDs
 DigitalOut led1(LED1);
@@ -629,7 +629,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          //pitch::SendROPSCmd((float)(sensors.pitch), true);
+          pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         if(flag_pc_out)
@@ -646,7 +646,7 @@ int main()
             // CAN polling
             //
             // TODO: Find a better place (and better way ?) for CAN
-            /*static CANMessage msg;
+            static CANMessage msg;
             if(can.read(msg))
             {
               if(msg.id == 0x39)
@@ -660,7 +660,6 @@ int main()
                 pitch::pitch_done = true;
               }
             }
-            */
 
             // *** PITCH AUTO ***
             //
@@ -671,7 +670,7 @@ int main()
             float pitch_target = 0.0f;
             //if(pitch_valid)
             //{
-              //pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels);
+              pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels);
             //}
             pitch_target_algo = pitch_target;
 
