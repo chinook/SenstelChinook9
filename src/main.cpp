@@ -15,7 +15,7 @@
 #define LED_DEBUG
 
 #define TIME_ACQ 50
-#define TIME_DATA_OUT 200
+#define TIME_DATA_OUT 150
 #define TIME_DATA_OUT_PITCH 200
 #define TIME_LORA_DATA_OUT 250
 
