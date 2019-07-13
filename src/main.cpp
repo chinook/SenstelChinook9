@@ -650,7 +650,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          pitch::SendROPSCmd((float)(sensors.pitch), true);
+          //pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         if(flag_pc_out)
@@ -660,7 +660,7 @@ int main()
             // If ROPS is not set (perhaps reseted) then send ROPS false to the drive
             if(!pitch::ROPS)
             {
-              pitch::SendROPSCmd((float)(sensors.pitch), false);
+              //pitch::SendROPSCmd((float)(sensors.pitch), false);
             }
 
             //
