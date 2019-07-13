@@ -15,7 +15,7 @@
 #define LED_DEBUG
 
 #define TIME_ACQ 50
-#define TIME_DATA_OUT 500
+#define TIME_DATA_OUT 200
 #define TIME_DATA_OUT_PITCH 200
 #define TIME_LORA_DATA_OUT 250
 
@@ -342,7 +342,7 @@ void main_acquisition()
         }
 
         // Check validity of pitch encoder
-        if(pitch_data > 4194000)
+        if(pitch_data > 4194000 | pitch_data == 0)
         {
           // Assume that pitch is not valid
           pitch_valid = false;
@@ -520,6 +520,9 @@ void WriteDataToCAN()
     if(errors)
     {
       //can.reset();
+      wait_ms(1);
+      can.frequency(250000);
+      wait_ms(1);
       CAN_transmit_status = false;
     }
     else
@@ -635,10 +638,10 @@ int main()
         // ROPS
         // TODO : Implement and test ROPS based on turbine value
         //pitch::ROPS = false;
-        if(sensors.rpm_rotor > MAX_TURB_RPM_VALUE)
-        {
-          pitch::ROPS = true;
-        }
+        //if(sensors.rpm_rotor > MAX_TURB_RPM_VALUE)
+        //{
+        //  pitch::ROPS = true;
+        //}
         if(volant_ROPS)
         {
           pitch::ROPS = true;
@@ -671,8 +674,13 @@ int main()
               {
                 //pc.printf("Received ROPS message\n\r");
                 //pitch::ROPS = (char)(msg.data[0]);
-                volant_ROPS = (char)(msg.data[0]);
-                pitch::ROPS = false;
+                volant_ROPS = 1;//(float)((char)(msg.data[0]));
+                //pitch::ROPS = false;
+              }
+              if(msg.id == 0x3F)
+              {
+                 volant_ROPS = 0;
+                 pitch::ROPS = 0;
               }
               if(msg.id == 0x35)
               {
