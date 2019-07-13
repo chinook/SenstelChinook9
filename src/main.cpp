@@ -64,7 +64,6 @@ Serial weather_station(PE_8, PE_7, 4800); // RX = PE_7, TX = PE_8
 Serial arduino_lora(PD_5, PD_6, 9600); // RX = PD_6, TX = PD_5d
 
 // RPM
-DigitalOut();
 InterruptIn rpm_pin(PE_13);
 InterruptIn wheel_rpm_pin(PE_11);
 
