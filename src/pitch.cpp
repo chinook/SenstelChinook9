@@ -14,15 +14,15 @@ namespace pitch
 float calc_pitch_angle_wheelRPM(float vehicle_speed) // speed in m/s
 {
   // TODO: Algo de Miclaye
-  return  (vehicle_speed <= 2.25) ? 6.9 :
-          ((vehicle_speed >= 9.0) ? 0 :
-          ((0.00213626 * pow(vehicle_speed, 6.0)) -
-          (0.07624901 * pow(vehicle_speed, 5.0)) +
-          (1.10673884 * pow(vehicle_speed, 4.0)) -
-          (8.44230389 * pow(vehicle_speed, 3.0)) +
-          (36.4432156 * pow(vehicle_speed, 2.0)) -
-          (86.81456881 * vehicle_speed) +
-           89.69360917));
+  return  -((vehicle_speed <= 1.25) ? 6.9 :
+           ((vehicle_speed >= 9.0) ? 0 :
+           ((0.00213626 * pow(vehicle_speed, 6.0)) -
+           (0.07624901 * pow(vehicle_speed, 5.0)) +
+           (1.10673884 * pow(vehicle_speed, 4.0)) -
+           (8.44230389 * pow(vehicle_speed, 3.0)) +
+           (36.4432156 * pow(vehicle_speed, 2.0)) -
+           (86.81456881 * vehicle_speed) +
+            89.69360917)));
 }
 
 // Function to convert from pitch value to encoder angle value
@@ -53,7 +53,16 @@ void SendPitchAngleCmd(float current_pitch, float target_pitch_blades)
 
   // Set a maximum to the number of steps so that we don't overshoot too much
   // Plus, its safer in case of angle error
-  if(nb_steps > 300) nb_steps = 300;
+  //if(abs(nb_steps) > 300) nb_steps = 300;
+  //nb_steps *= -1;
+
+  if(abs(nb_steps) > 300)
+  {
+    if(nb_steps < 0)
+      nb_steps = -300;
+    else
+      nb_steps = 300;
+  }
   nb_steps *= -1;
   // TODO: Add checks and validation of steps
 
@@ -68,13 +77,13 @@ void SendPitchAngleCmd(float current_pitch, float target_pitch_blades)
   //}
 }
 
-float AutoPitchWheelRPM(float current_pitch, float wheel_rpm)
+float AutoPitchWheelRPM(float current_pitch, float wheel_rpm, float& vehicle_speed)
 {
   // Get target pitch angle from ABSOLUTE ZERO
   float diameter = 0.48; // 162.5 cm rayon
   // TODO : Add calculation from wheel_rpm
   //static float vehicle_speed = 2.5f;
-  float vehicle_speed = wheel_rpm * diameter * M_PI / 60.0f;
+  vehicle_speed = wheel_rpm * diameter * M_PI / 60.0f;
 
   float target_angle_blades = calc_pitch_angle_wheelRPM(vehicle_speed);
 
