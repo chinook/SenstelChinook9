@@ -513,10 +513,10 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
     wait_us(200);
 
-    pc.printf("can success = %d\n\r", can_success);
+    //pc.printf("can success = %d\n\r", can_success);
 
     unsigned char errors = can.tderror();
-    pc.printf("num write errors = %d\n\r", errors);
+    //pc.printf("num write errors = %d\n\r", errors);
     if(errors)
     {
       //can.reset();
