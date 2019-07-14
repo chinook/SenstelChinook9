@@ -179,7 +179,7 @@ void ws_acquisition()
 {
     while (true)
     {
-        wait_ms(1); // Lessen the load on the uC
+        wait_ms(2); // Lessen the load on the uC
         if(weather_station.readable())
         {
             char character = weather_station.getc();
