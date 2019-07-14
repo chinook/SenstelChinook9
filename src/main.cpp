@@ -213,11 +213,16 @@ void ws_acquisition()
                     if(wind_speed > 100)
                       continue;
 
-                    sensors.wind_speed = wind_speed;
+                    bool valid_reading = (wind_speed != 0.0f);
 
+                    // If wind was 0, keep the last one as current
+                    if(valid_reading)
+                    {
+                      sensors.wind_speed = wind_speed;
+                    }
+                    wind_speeds[wind_index] = sensors.wind_speed;
 
                     wind_directions[wind_index] = sensors.wind_direction;
-                    wind_speeds[wind_index] = sensors.wind_speed;
                     wind_index = (wind_index + 1) % WIND_ANGLE_SAMPLES;
 
                     wind_direction_avg = (wind_directions[0] +
@@ -692,7 +697,9 @@ int main()
               }
               if(msg.id == 0x35)
               {
-                pitch::pitch_done = true;
+                long long value;
+                memcpy(&value, &msg.data[0], sizeof(int)*2);
+                pitch::pitch_done = value;
               }
             }
 
