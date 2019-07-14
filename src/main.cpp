@@ -234,7 +234,7 @@ void ws_acquisition()
                       wind_direction_avg = sensors.wind_direction;
                       wind_speed_avg = sensors.wind_speed;
                     }
-                    
+
                 }
                 // Clear the packet
                 index_ = 0;
