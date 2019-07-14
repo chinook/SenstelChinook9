@@ -68,6 +68,8 @@ InterruptIn rpm_pin(PE_13);
 InterruptIn wheel_rpm_pin(PE_11);
 
 // Pitch position encoder
+//DigitalOut pitch_clock(PE_15);
+//DigitalIn pitch_input(PF_15);
 DigitalOut pitch_clock(PE_15);
 DigitalIn pitch_input(PF_15);
 
