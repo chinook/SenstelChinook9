@@ -562,12 +562,17 @@ int amain()
   wait_ms(1);
 
   ws_thread.start(ws_acquisition);
-  sensors.pitch = 999;
+  //sensors.pitch = 999;
 
   while(1)
   {
-    WriteDataToCAN();
-    wait_ms(100);
+    // Pitch tests
+    float nb_steps = 100;
+    can.write(CANMessage(0x36, (char*)(&nb_steps), 4));
+    wait_us(100);
+
+    //WriteDataToCAN();
+    wait_ms(1000);
   }
 }
 
