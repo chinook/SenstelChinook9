@@ -112,7 +112,7 @@ uint8_t wind_index = 0;
 
 // Trames de la weather station
 char trame[64];
-int index_;
+volatile int index_;
 // RPM counter
 uint32_t rpm_counter = 0;
 uint32_t wheel_rpm_counter = 0;
@@ -215,7 +215,7 @@ void ws_acquisition()
 
                     sensors.wind_speed = wind_speed;
 
-
+                    /*
                     wind_directions[wind_index] = sensors.wind_direction;
                     wind_speeds[wind_index] = sensors.wind_speed;
                     wind_index = (wind_index + 1) % WIND_ANGLE_SAMPLES;
@@ -236,6 +236,7 @@ void ws_acquisition()
                       wind_direction_avg = sensors.wind_direction;
                       wind_speed_avg = sensors.wind_speed;
                     }
+                    */
                 }
                 // Clear the packet
                 index_ = 0;
