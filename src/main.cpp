@@ -111,8 +111,8 @@ float wind_speed_avg = 0.0f;
 uint8_t wind_index = 0;
 
 // Trames de la weather station
-char trame[64];
-volatile int index_;
+//char trame[64];
+//volatile int index_;
 // RPM counter
 uint32_t rpm_counter = 0;
 uint32_t wheel_rpm_counter = 0;
@@ -177,6 +177,8 @@ enum
 // Weather station thread
 void ws_acquisition()
 {
+  char trame[256];
+  int index_ = 0;
     while (true)
     {
         wait_ms(2); // Lessen the load on the uC
@@ -193,7 +195,7 @@ void ws_acquisition()
                 if(!strcmp(IIMWV_str, sentence_begin))
                 {
                     led1 = !led1;
-                    weather_station_up = true;
+                    //weather_station_up = true;
                     // Extract information
                     static char wind_dir[6] = {0};
                     memcpy(wind_dir, trame + 7, 5);
@@ -203,10 +205,6 @@ void ws_acquisition()
                     sensors.wind_direction = atof(wind_dir);
                     sensors.wind_direction = (sensors.wind_direction > 180) ? sensors.wind_direction -360: sensors.wind_direction;
                     //sensors.wind_direction *= -1;
-	                /*if (sensors.wind_direction < 0)
-		                sensors.wind_direction = 180 - sensors.wind_direction;
-	                else if (sensors.wind_direction >= 0)
-		                sensors.wind_direction = -(180 + sensors.wind_direction);*/
                     float wind_speed = atof(wind_spd) * 0.514444;
 
                     // Discard packet if data is erroneous
@@ -215,7 +213,7 @@ void ws_acquisition()
 
                     sensors.wind_speed = wind_speed;
 
-                    /*
+
                     wind_directions[wind_index] = sensors.wind_direction;
                     wind_speeds[wind_index] = sensors.wind_speed;
                     wind_index = (wind_index + 1) % WIND_ANGLE_SAMPLES;
@@ -236,12 +234,14 @@ void ws_acquisition()
                       wind_direction_avg = sensors.wind_direction;
                       wind_speed_avg = sensors.wind_speed;
                     }
-                    */
+                    
                 }
                 // Clear the packet
                 index_ = 0;
             }
             // Put the character read into our buffer
+            if(index_ >= 255)
+              index_ = 0;
             trame[index_++] = character;
         }
     }
