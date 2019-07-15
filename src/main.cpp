@@ -197,7 +197,7 @@ void ws_acquisition()
                 if(!strcmp(IIMWV_str, sentence_begin))
                 {
                     led1 = !led1;
-                    //weather_station_up = true;
+                    weather_station_up = true;
                     // Extract information
                     static char wind_dir[6] = {0};
                     memcpy(wind_dir, trame + 7, 5);
