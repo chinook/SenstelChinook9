@@ -15,7 +15,7 @@
 #define LED_DEBUG
 
 #define TIME_ACQ 50
-#define TIME_DATA_OUT 200
+#define TIME_DATA_OUT 100
 #define TIME_DATA_OUT_PITCH 200
 #define TIME_LORA_DATA_OUT 250
 
@@ -572,14 +572,25 @@ int amain()
   //sensors.pitch = 999;
 
   while(1)
-  {
-    // Pitch tests
-    float nb_steps = 100;
-    can.write(CANMessage(0x36, (char*)(&nb_steps), 4));
-    wait_us(100);
+    static CANMessage msg;
+    if(can.read(msg))
+    {
+      if(msg.id == 0x35)
+      {
+        pitch::pitch_done = true;
+      }
+    }
 
     //WriteDataToCAN();
-    wait_ms(1000);
+    float nb_steps = 100;
+    if(pitch::pitch_done)
+    {
+      can.write(CANMessage(0x36, (char*)&nb_steps, 8));
+      wait_us(200);
+      pitch::pitch_done = false;
+      pc.printf("pitch_done\n\r");
+    }
+    wait_ms(200);
   }
 }
 
@@ -663,7 +674,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          pitch::SendROPSCmd((float)(sensors.pitch), true);
+          //pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         if(flag_pc_out)
@@ -673,7 +684,7 @@ int main()
             // If ROPS is not set (perhaps reseted) then send ROPS false to the drive
             if(!pitch::ROPS)
             {
-              pitch::SendROPSCmd((float)(sensors.pitch), false);
+              //pitch::SendROPSCmd((float)(sensors.pitch), false);
             }
 
             //
@@ -733,7 +744,10 @@ int main()
             pc.printf(clear_str);
 
             // Print data to screen
-            pc.printf("Torque = %f Nm\n\r", sensors.torque);
+            static float max_torque = 0.0f;
+            if(sensors.torque > max_torque)
+              max_torque = sensors.torque;
+            pc.printf("Torque = %f Nm  ,  max torque = %f Nm\n\r", sensors.torque, max_torque);
             pc.printf("Loadcell = %f lbs\n\r", sensors.loadcell);
             pc.printf("Rotor RPM = %f rpm\n\r", sensors.rpm_rotor);
             pc.printf("Wheel RPM = %f rpm\n\r", sensors.rpm_wheels);
