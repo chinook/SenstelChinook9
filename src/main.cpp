@@ -11,6 +11,7 @@
 #include "lora.hpp"
 #include "main.hpp"
 #include "pitch.hpp"
+#include "unit.hpp"
 
 #define LED_DEBUG
 
@@ -318,6 +319,9 @@ void main_acquisition()
         rpm_counter = 0;
 
         // Wheel RPM
+        sensors.wind_speed = unit::getWindSpeed();
+        sensors.rpm_wheels = unit::getWheelRPM();
+        /*
         static int cnt_wheel_rpm = 0;
         ++cnt_wheel_rpm;
         if(cnt_wheel_rpm >= 10)
@@ -330,6 +334,7 @@ void main_acquisition()
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
         }
+        */
 
 #ifdef LED_DEBUG
         led2 = !led2;
@@ -572,6 +577,7 @@ int amain()
   //sensors.pitch = 999;
 
   while(1)
+  {
     static CANMessage msg;
     if(can.read(msg))
     {
@@ -723,12 +729,12 @@ int main()
             static float pitch_target = 0.0f;
 
             static int cnt_pitch_auto = 0;
-            if(cnt_pitch_auto++ >= 5)
+            if(cnt_pitch_auto++ >= 2)
             {
-              if(pitch_valid)
-              {
+              //if(pitch_valid)
+              //{
                 pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels, vehicle_speed);
-              }
+              //}
 
               pitch_miclette_target = pitch_target;
               pitch_target_algo = pitch_target;
