@@ -572,6 +572,7 @@ int amain()
   //sensors.pitch = 999;
 
   while(1)
+  {
     static CANMessage msg;
     if(can.read(msg))
     {
