@@ -565,8 +565,26 @@ int amain()
 
   while(1)
   {
-    WriteDataToCAN();
-    wait_ms(100);
+    static CANMessage msg;
+    if(can.read(msg))
+    {
+      if(msg.id == 0x35)
+      {
+        pitch::pitch_done = true;
+      }
+    }
+
+    //WriteDataToCAN();
+    float nb_steps = 100;
+    if(pitch::pitch_done)
+    {
+      can.write(CANMessage(0x36, (char*)&nb_steps, 8));
+      wait_us(200);
+      pitch::pitch_done = false;
+      pc.printf("pitch_done\n\r");
+    }
+
+    wait_ms(200);
   }
 }
 
@@ -718,7 +736,10 @@ int main()
             pc.printf(clear_str);
 
             // Print data to screen
-            pc.printf("Torque = %f Nm\n\r", sensors.torque);
+            static float max_torque = 0.0f;
+            if(sensors.torque > max_torque)
+              max_torque = sensors.torque;
+            pc.printf("Torque = %f Nm  ,  max torque = %f Nm\n\r", sensors.torque, max_torque);
             pc.printf("Loadcell = %f lbs\n\r", sensors.loadcell);
             pc.printf("Rotor RPM = %f rpm\n\r", sensors.rpm_rotor);
             pc.printf("Wheel RPM = %f rpm\n\r", sensors.rpm_wheels);
