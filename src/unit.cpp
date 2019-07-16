@@ -14,7 +14,7 @@ float getWheelRPM()
 
 float getWindSpeed()
 {
-  return 3.5f;
+  return 10.0f;
   //return 0.0f;
 }
 

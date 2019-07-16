@@ -733,7 +733,10 @@ int main()
             {
               //if(pitch_valid)
               //{
-                pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch, sensors.rpm_wheels, vehicle_speed);
+                pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
+                                                               sensors.rpm_wheels,
+                                                               sensors.wind_speed,
+                                                               vehicle_speed);
               //}
 
               pitch_miclette_target = pitch_target;

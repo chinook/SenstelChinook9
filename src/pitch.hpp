@@ -33,7 +33,7 @@ void SendPitchAngleCmd(float current_pitch, float target_pitch_blades);
 // Function called to automatically set the blades angle using
 // an algorithm
 // ** Master commandsfor auto pitch **
-float AutoPitchWheelRPM(float current_pitch, float wheel_rpm, float& vehicle_speed);
+float AutoPitchWheelRPM(float current_pitch, float wheel_rpm, float wind_speed, float& vehicle_speed);
 
 // Function called to step to -15 degrees asap
 void SendROPSCmd(float current_pitch, bool ROPS);
