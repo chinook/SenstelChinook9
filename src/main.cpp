@@ -722,7 +722,6 @@ int main()
         static CANMessage msg;
         if(can.read(msg))
         {
-          /*
           if(msg.id == 0x39)
           {
             //pc.printf("Received ROPS message\n\r");
@@ -735,7 +734,6 @@ int main()
              volant_ROPS = 0;
              pitch::ROPS = 0;
           }
-          */
           if(msg.id == 0x35)
           {
             pitch_done = true;
@@ -745,8 +743,6 @@ int main()
         if(flag_pc_out)
         {
             flag_pc_out = false;
-
-            //WriteDataToCAN();
 
             // If ROPS is not set (perhaps reseted) then send ROPS false to the drive
             if(!pitch::ROPS)
