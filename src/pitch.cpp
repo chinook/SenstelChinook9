@@ -6,6 +6,9 @@
 namespace pitch
 {
 
+bool ROPS = false;
+unsigned pitch_mode = -1;
+
 //
 // Automatic pitch angle calculation algorithms
 //

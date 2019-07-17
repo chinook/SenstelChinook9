@@ -16,11 +16,11 @@ namespace pitch
 {
 
 // Communication variables with drive pitch
-static bool pitch_done = true;
-static bool ROPS = false;
+//static bool pitch_done = true;
+extern bool ROPS;
 
 // Pitch mode
-static unsigned pitch_mode = -1;
+extern unsigned pitch_mode;
 
 // Helper function for converting pitch value to encoder angle value
 float pitch_to_angle(float pitch_value);

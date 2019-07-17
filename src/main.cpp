@@ -74,8 +74,13 @@ InterruptIn wheel_rpm_pin(PE_11);
 DigitalOut pitch_clock(PE_15);
 DigitalIn pitch_input(PF_15);
 
+Serial pc(USBTX, USBRX, 115200);
+CAN can(PB_8, PB_9); // RD = PB8, TD = PB9
+
 // Flags
 int flag_pc_out = false;
+
+bool pitch_done = true;
 
 // structure to store sensor data
 SensorData sensors;
@@ -384,7 +389,7 @@ void main_data_out()
         flag_pc_out = true;
 
         // Out CAN
-        WriteDataToCAN();
+        //WriteDataToCAN();
 
         // Out LoRa
         // Transmit serial UART to arduino for LoRa transmission
@@ -416,8 +421,8 @@ void WriteDataToCAN()
     //pc.printf("CAN\r\n");
 
     // Gear
-    can_success &= can.write(CANMessage(GEAR_CAN_ID, (char*)&sensors.gear, 4));
-    wait_us(200);
+    //can_success &= can.write(CANMessage(GEAR_CAN_ID, (char*)&sensors.gear, 4));
+    //wait_us(200);
     // Pitch
 
     float pitch_angle = (3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch);
@@ -437,11 +442,11 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
     wait_us(200);
     // Current + Voltage
-    can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
-    wait_us(200);
+    //can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
+    //wait_us(200);
     // Voltage
-    can_success &= can.write(CANMessage(VOLTAGE_CAN_ID, (char*)&dummy_zero, 4));
-    wait_us(200);
+    //can_success &= can.write(CANMessage(VOLTAGE_CAN_ID, (char*)&dummy_zero, 4));
+    //wait_us(200);
     // Wheel RPM
     //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
     can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&pitch_miclette_target), 4));
@@ -523,8 +528,9 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)&sensors.loadcell, 4));
     wait_us(200);
     // Torque
-    can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
-    wait_us(200);
+    //can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
+    //wait_us(200);
+
 
     //pc.printf("can success = %d\n\r", can_success);
 
@@ -576,6 +582,8 @@ int amain()
   ws_thread.start(ws_acquisition);
   //sensors.pitch = 999;
 
+  pc.printf("start\n\r");
+
   while(1)
   {
     static CANMessage msg;
@@ -583,11 +591,32 @@ int amain()
     {
       if(msg.id == 0x35)
       {
-        pitch::pitch_done = true;
+        pitch_done = true;
       }
     }
 
-    //WriteDataToCAN();
+    static float vehicle_speed = 0.0f;
+    static float pitch_target = 0.0f;
+
+    static int cnt_pitch_auto = 0;
+    if(cnt_pitch_auto++ >= 2)
+    {
+      //if(pitch_valid)
+      //{
+        pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
+                                                       sensors.rpm_wheels,
+                                                       sensors.wind_speed,
+                                                       vehicle_speed);
+      //}
+
+      pitch_miclette_target = pitch_target;
+      pitch_target_algo = pitch_target;
+      cnt_pitch_auto = 0;
+    }
+
+    WriteDataToCAN();
+
+    /*
     float nb_steps = 100;
     if(pitch::pitch_done)
     {
@@ -596,6 +625,7 @@ int amain()
       pitch::pitch_done = false;
       pc.printf("pitch_done\n\r");
     }
+    */
     wait_ms(200);
   }
 }
@@ -659,6 +689,8 @@ int main()
     // Main Loop
     //
 
+    pitch_done = true;
+
     while (true)
     {
         //
@@ -683,41 +715,43 @@ int main()
           //pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
+        //
+        // CAN polling
+        //
+        // TODO: Find a better place (and better way ?) for CAN
+        static CANMessage msg;
+        if(can.read(msg))
+        {
+          /*
+          if(msg.id == 0x39)
+          {
+            //pc.printf("Received ROPS message\n\r");
+            //pitch::ROPS = (char)(msg.data[0]);
+            volant_ROPS = 1;//(float)((char)(msg.data[0]));
+            //pitch::ROPS = false;
+          }
+          if(msg.id == 0x3F)
+          {
+             volant_ROPS = 0;
+             pitch::ROPS = 0;
+          }
+          */
+          if(msg.id == 0x35)
+          {
+            pitch_done = true;
+          }
+        }
+
         if(flag_pc_out)
         {
             flag_pc_out = false;
+
+            //WriteDataToCAN();
 
             // If ROPS is not set (perhaps reseted) then send ROPS false to the drive
             if(!pitch::ROPS)
             {
               //pitch::SendROPSCmd((float)(sensors.pitch), false);
-            }
-
-            //
-            // CAN polling
-            //
-            // TODO: Find a better place (and better way ?) for CAN
-            static CANMessage msg;
-            if(can.read(msg))
-            {
-              if(msg.id == 0x39)
-              {
-                //pc.printf("Received ROPS message\n\r");
-                //pitch::ROPS = (char)(msg.data[0]);
-                volant_ROPS = 1;//(float)((char)(msg.data[0]));
-                //pitch::ROPS = false;
-              }
-              if(msg.id == 0x3F)
-              {
-                 volant_ROPS = 0;
-                 pitch::ROPS = 0;
-              }
-              if(msg.id == 0x35)
-              {
-                long long value;
-                memcpy(&value, &msg.data[0], sizeof(int)*2);
-                pitch::pitch_done = value;
-              }
             }
 
             // *** PITCH AUTO ***
@@ -731,13 +765,13 @@ int main()
             static int cnt_pitch_auto = 0;
             if(cnt_pitch_auto++ >= 2)
             {
-              //if(pitch_valid)
-              //{
+              if(pitch_valid)
+              {
                 pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
                                                                sensors.rpm_wheels,
                                                                sensors.wind_speed,
                                                                vehicle_speed);
-              //}
+              }
 
               pitch_miclette_target = pitch_target;
               pitch_target_algo = pitch_target;
@@ -779,29 +813,10 @@ int main()
             pc.printf("\n\r");
             pc.printf("LoRa status        -  %s\n\r", (lora_tx_successful) ? "SUCCESS" : "FAILURE");
             pc.printf("CAN status         -  %s\n\r", (CAN_transmit_status) ? "SUCCESS" : "FAILURE");
+            pc.printf("Pitch drive status -  %s\n\r", (pitch_done) ? "OK" : "NOT OK");
         }
 
         // Active looping at 5ms interval
         wait_ms(5);
     }
-}
-
-//
-// Interrupts
-//
-void CAN_recv()
-{
-  CANMessage msg;
-  if(can.read(msg))
-  {
-    if(msg.id == 0x39)
-    {
-      //ROPS = msg.data_i[0];
-      pitch::ROPS = 1;
-    }
-    else if(msg.id == 0x35)
-    {
-      pitch::pitch_done = true;
-    }
-  }
 }

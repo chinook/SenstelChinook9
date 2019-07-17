@@ -26,7 +26,9 @@ struct LoraData {
 };
 
 // Outputs
-static Serial pc(USBTX, USBRX, 115200);
-static CAN can(PB_8, PB_9); // RD = PB8, TD = PB9
+extern Serial pc;
+extern CAN can;
+
+extern bool pitch_done;
 
 #endif // MAIN_HPP
