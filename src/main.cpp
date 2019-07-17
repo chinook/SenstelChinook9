@@ -324,9 +324,10 @@ void main_acquisition()
         rpm_counter = 0;
 
         // Wheel RPM
-        sensors.wind_speed = unit::getWindSpeed();
-        sensors.rpm_wheels = unit::getWheelRPM();
-        /*
+        // Unit testing pitch auto
+        //sensors.wind_speed = unit::getWindSpeed();
+        //sensors.rpm_wheels = unit::getWheelRPM();
+
         static int cnt_wheel_rpm = 0;
         ++cnt_wheel_rpm;
         if(cnt_wheel_rpm >= 10)
@@ -339,7 +340,6 @@ void main_acquisition()
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
         }
-        */
 
 #ifdef LED_DEBUG
         led2 = !led2;
@@ -389,7 +389,7 @@ void main_data_out()
         flag_pc_out = true;
 
         // Out CAN
-        //WriteDataToCAN();
+        WriteDataToCAN();
 
         // Out LoRa
         // Transmit serial UART to arduino for LoRa transmission
