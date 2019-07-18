@@ -788,11 +788,15 @@ int main()
               max_torque = sensors.torque;
             pc.printf("Torque = %f Nm  ,  max torque = %f Nm\n\r", sensors.torque, max_torque);
             pc.printf("Loadcell = %f lbs\n\r", sensors.loadcell);
+            pc.printf("\n\r");
             pc.printf("Rotor RPM = %f rpm\n\r", sensors.rpm_rotor);
             pc.printf("Wheel RPM = %f rpm\n\r", sensors.rpm_wheels);
+            pc.printf("\n\r");
             pc.printf("Wind direction = %f degs\n\r", sensors.wind_direction);
             pc.printf("AVG Wind direction = %f degs\n\r", wind_direction_avg);
             pc.printf("Wind speed = %f m/s\n\r", sensors.wind_speed);
+            pc.printf("AVG Wind speed = %f\n\r", wind_speed_avg);
+            pc.printf("\n\r");
             pc.printf("Pitch = %f   raw pitch = %d\n\r", (3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch), sensors.pitch);
             //pc.printf("First time pitch steps = %f\n\r", delta_steps);
             //pc.printf("Current pitch for calc = %f\n\r", current_pitch);
@@ -800,6 +804,7 @@ int main()
             pc.printf("Pitch target algo miclaye = %f\n\r", pitch_target);
             pc.printf("Vehicle speed = %f\n\r", vehicle_speed);
             //pc.printf("ROPS delta steps = %f\n\r", rops_steps);
+            pc.printf("\n\r");
             pc.printf("ROPS = %s  ,  volant ROPS = %s\n\r", (pitch::ROPS) ? "TRUE" : "FALSE", (volant_ROPS) ? "TRUE" : "FALSE");
             pc.printf("\n\r");
             pc.printf("Weather Station    -  %s\n\r", (weather_station_up) ? "ON" : "OFF");
