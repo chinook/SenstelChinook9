@@ -767,7 +767,7 @@ int main()
             // Automatic pitch is sent at the same rate as other outputs
             // This seems adequate for now, re-evaluate later
             //
-            static float vehicle_speed = 0.0f;
+            //static float vehicle_speed = 0.0f;
             static float pitch_target = 0.0f;
 
             static int cnt_pitch_auto = 0;
