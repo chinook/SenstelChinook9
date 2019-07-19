@@ -336,9 +336,10 @@ void main_acquisition()
         if(cnt_wheel_rpm >= 10)
         {
           //sensors.rpm_wheels = (float)wheel_rpm_counter * 1000.0f / (float)TIME_ACQ;
-          sensors.rpm_wheels = wheel_rpm_counter;
+          sensors.rpm_wheels = (float)wheel_rpm_counter;
   //#ifndef WHEEL_RPM_KHZ_OUTPUT
           sensors.rpm_wheels *= 1000.0f/(float)(TIME_ACQ * cnt_wheel_rpm) * 60.0f / 48.0f;
+
   //#endif
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
