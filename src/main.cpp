@@ -118,8 +118,8 @@ float wind_direction_avg = 0.0f;
 float wind_speed_avg = 0.0f;
 uint8_t wind_index = 0;
 
-//float vehicule_speed = 0.0f;
-//float vehicule_efficacite = 0.0f;
+float vehicule_speed = 0.0f;
+float vehicule_efficacite = 0.0f;
 
 // Trames de la weather station
 //char trame[64];
@@ -816,8 +816,8 @@ int main()
             //pc.printf("First ever pitch = %f\n\r", first_pitch_value);
             pc.printf("Pitch target algo miclaye = %f\n\r", pitch_target);
             pc.printf("\n\r");
-            pc.printf("Vehicle speed = %f\n\r", vehicle_speed);
-            //pc.printf("Vehicle efficacite = %f\n\r", vehicule_efficacite);
+            pc.printf("Vehicle speed = %f\n\r", vehicule_speed);
+            pc.printf("Vehicle efficacite = %f\n\r", vehicule_efficacite);
             //pc.printf("ROPS delta steps = %f\n\r", rops_steps);
             pc.printf("\n\r");
             pc.printf("ROPS = %s  ,  volant ROPS = %s\n\r", (pitch::ROPS) ? "TRUE" : "FALSE", (volant_ROPS) ? "TRUE" : "FALSE");

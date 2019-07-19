@@ -38,10 +38,13 @@ float calc_pitch_angle_wheelRPM(float vehicle_speed, float wind_speed) // speed 
                 ( 7.39386274 * vehicle_speed       ) +
                 17.11329103))));
   */
-  if(wind_speed < 3.0f)
-    return 0.0f;
+  //if(wind_speed < 3.0f)
+  //  return 0.0f;
 
   int wind_index = (int)((wind_speed - 3) * 2);
+  if(wind_index < 0 || wind_index > 9)
+    wind_index = 0;
+  
   float lower_bound = valeurs[wind_index][7];
   float upper_bound = valeurs[wind_index][8];
   float lower_clamp = valeurs[wind_index][9];
