@@ -731,7 +731,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          pitch::SendROPSCmd((float)(sensors.pitch), true);
+          //pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         //
