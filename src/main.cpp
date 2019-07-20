@@ -694,7 +694,7 @@ int main()
 
     // Pitch drive mode
     wait_ms(100);
-    pitch::SetMode(PITCH_MANUAL);
+    pitch::SetMode(PITCH_AUTOMATIC);
     wait_ms(1);
 
     // Mast drive mode
@@ -787,6 +787,11 @@ int main()
                                                                sensors.rpm_wheels,
                                                                sensors.wind_speed,
                                                                vehicle_speed);
+                // Failsafe for pitch yeeting
+                if((3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch) > 15.0f)
+                {
+                  NVIC_SystemReset();
+                }
               }
 
               pitch_miclette_target = pitch_target;
