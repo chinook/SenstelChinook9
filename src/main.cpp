@@ -790,7 +790,7 @@ int main()
                 // Failsafe for pitch yeeting
                 if((3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch) > 15.0f)
                 {
-                  NVIC_SystemReset();
+                  //NVIC_SystemReset();
                 }
               }
 
