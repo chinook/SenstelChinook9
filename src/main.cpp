@@ -357,7 +357,7 @@ void main_acquisition()
 
         // Vehicle efficiency
         float static_wind = wind_speed_avg - vehicule_speed;
-        vehicule_efficacite = vehicule_speed / static_wind;
+        vehicule_efficacite = 100.0f * vehicule_speed / static_wind;
 
 #ifdef LED_DEBUG
         led2 = !led2;
