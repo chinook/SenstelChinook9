@@ -362,7 +362,7 @@ void main_acquisition()
 #ifdef LED_DEBUG
         led2 = !led2;
 #endif
-      
+
         wait_ms(1);
 
         // Pitch
