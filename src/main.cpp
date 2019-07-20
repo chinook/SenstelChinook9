@@ -319,12 +319,18 @@ void main_acquisition()
         //sensors.loadcell -= 457.0;
 
         // Rotor RPM
-        //sensors.rpm_rotor = (float)rpm_counter * 1000.0f / (float)TIME_ACQ;
-        sensors.rpm_rotor = rpm_counter;
-//#ifndef RPM_KHZ_OUTPUT
-        sensors.rpm_rotor *= 1000.0f/(float)TIME_ACQ * 60.0f / 360.0f;
-//#endif
-        rpm_counter = 0;
+        static int cnt_rpm = 0;
+        ++cnt_rpm;
+        if(cnt_rpm >= 10)
+        {
+          //sensors.rpm_rotor = (float)rpm_counter * 1000.0f / (float)TIME_ACQ;
+          sensors.rpm_rotor = rpm_counter;
+  //#ifndef RPM_KHZ_OUTPUT
+          sensors.rpm_rotor *= 1000.0f/(float)(TIME_ACQ * cnt_rpm) * 60.0f / 360.0f;
+  //#endif
+          cnt_rpm = 0;
+          rpm_counter = 0;
+        }
 
         // Wheel RPM
         // Unit testing pitch auto
