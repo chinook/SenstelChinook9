@@ -41,7 +41,7 @@
 #define LOADCELL_CAN_ID 14
 #define TORQUE_CAN_ID 15
 
-#define MAX_TURB_RPM_VALUE 400
+#define MAX_TURB_RPM_VALUE 1300
 
 // LEDs
 DigitalOut led1(LED1);
