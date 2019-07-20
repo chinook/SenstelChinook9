@@ -352,12 +352,12 @@ void main_acquisition()
         }
 
         // Speed vehicle
-        //float diameter = 0.48;
-        //vehicule_speed = sensors.rpm_wheels * diameter * M_PI / 60.0f;
+        float diameter = 0.48;
+        vehicule_speed = sensors.rpm_wheels * diameter * M_PI / 60.0f;
 
         // Vehicle efficiency
-        //float static_wind = wind_speed_avg - vehicule_speed;
-        //vehicule_efficacite = vehicule_speed / static_wind;
+        float static_wind = wind_speed_avg - vehicule_speed;
+        vehicule_efficacite = vehicule_speed / static_wind;
 
 #ifdef LED_DEBUG
         led2 = !led2;
@@ -823,7 +823,7 @@ int main()
             pc.printf("Pitch target algo miclaye = %f\n\r", pitch_target);
             pc.printf("\n\r");
             pc.printf("Vehicle speed = %f\n\r", vehicule_speed);
-            pc.printf("Vehicle efficacite = %f\n\r", vehicule_efficacite);
+            pc.printf("Vehicle efficacite = %f %%\n\r", vehicule_efficacite);
             //pc.printf("ROPS delta steps = %f\n\r", rops_steps);
             pc.printf("\n\r");
             pc.printf("ROPS = %s  ,  volant ROPS = %s\n\r", (pitch::ROPS) ? "TRUE" : "FALSE", (volant_ROPS) ? "TRUE" : "FALSE");
