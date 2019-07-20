@@ -718,10 +718,10 @@ int main()
         // ROPS
         // TODO : Implement and test ROPS based on turbine value
         //pitch::ROPS = false;
-        //if(sensors.rpm_rotor > MAX_TURB_RPM_VALUE)
-        //{
-        //  pitch::ROPS = true;
-        //}
+        if(sensors.rpm_rotor > MAX_TURB_RPM_VALUE)
+        {
+          pitch::ROPS = true;
+        }
         if(volant_ROPS)
         {
           pitch::ROPS = true;
@@ -730,7 +730,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          //pitch::SendROPSCmd((float)(sensors.pitch), true);
+          pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         //
@@ -765,7 +765,7 @@ int main()
             // If ROPS is not set (perhaps reseted) then send ROPS false to the drive
             if(!pitch::ROPS)
             {
-              //pitch::SendROPSCmd((float)(sensors.pitch), false);
+              pitch::SendROPSCmd((float)(sensors.pitch), false);
             }
 
             // *** PITCH AUTO ***
