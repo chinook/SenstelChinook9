@@ -376,6 +376,7 @@ void main_acquisition()
             wait_us(10);
             pitch_data |= pitch_input;
         }
+        //pitch_data += 2000000;
 
         // Check validity of pitch encoder
         if(pitch_data > 4194000 | pitch_data == 0)
@@ -543,7 +544,7 @@ void WriteDataToCAN()
     }
 
     // Loadcell
-    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)&sensors.loadcell, 4));
+    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&vehicule_efficacite), 4));
     wait_us(200);
     // Torque
     //can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
@@ -693,7 +694,7 @@ int main()
 
     // Pitch drive mode
     wait_ms(100);
-    pitch::SetMode(PITCH_AUTOMATIC);
+    pitch::SetMode(PITCH_MANUAL);
     wait_ms(1);
 
     // Mast drive mode
