@@ -357,7 +357,10 @@ void main_acquisition()
 
         // Vehicle efficiency
         float static_wind = wind_speed_avg - vehicule_speed;
-        vehicule_efficacite = 100.0f * vehicule_speed / static_wind;
+        if(static_wind == 0)
+          vehicule_efficacite = 0.0f;
+        else
+          vehicule_efficacite = 100.0f * vehicule_speed / static_wind;
 
 #ifdef LED_DEBUG
         led2 = !led2;
@@ -547,8 +550,9 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&vehicule_efficacite), 4));
     wait_us(200);
     // Torque
-    //can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
-    //wait_us(200);
+    int vehicule_efficacite_int = (int)vehicule_efficacite;
+    can_success &= can.write(CANMessage(0xBB, (char*)&vehicule_efficacite_int, 4));
+    wait_us(200);
 
 
     //pc.printf("can success = %d\n\r", can_success);
