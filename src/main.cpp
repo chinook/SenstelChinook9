@@ -382,7 +382,7 @@ void main_acquisition()
         //pitch_data += 2000000;
 
         // Check validity of pitch encoder
-        if(pitch_data > 4194000 | pitch_data == 0)
+        if(pitch_data > 4194000 || pitch_data == 0)
         {
           // Assume that pitch is not valid
           pitch_valid = false;
