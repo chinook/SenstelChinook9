@@ -6,7 +6,7 @@ namespace unit
 float getWheelRPM()
 {
   static float time = 0.0f;
-  time += 0.1f;
+  time += 0.5f;
 
   // wheel rpm simulation acceleration
   return time;

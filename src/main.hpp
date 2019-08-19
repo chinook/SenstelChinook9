@@ -31,4 +31,6 @@ extern CAN can;
 
 extern bool pitch_done;
 
+extern float global_nb_steps;
+
 #endif // MAIN_HPP

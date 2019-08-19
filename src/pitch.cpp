@@ -99,6 +99,7 @@ void SendPitchAngleCmd(float current_pitch, float target_pitch_blades)
       nb_steps = 300;
   }
   nb_steps *= -1;
+  global_nb_steps = nb_steps;
   // TODO: Add checks and validation of steps
 
   // Send the command to the stepper drive

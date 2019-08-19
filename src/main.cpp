@@ -41,7 +41,7 @@
 #define LOADCELL_CAN_ID 14
 #define TORQUE_CAN_ID 15
 
-#define MAX_TURB_RPM_VALUE 1300
+#define MAX_TURB_RPM_VALUE 600
 
 // LEDs
 DigitalOut led1(LED1);
@@ -81,6 +81,8 @@ CAN can(PB_8, PB_9); // RD = PB8, TD = PB9
 int flag_pc_out = false;
 
 bool pitch_done = true;
+
+float global_nb_steps = 0.0f;
 
 // structure to store sensor data
 SensorData sensors;
@@ -485,6 +487,18 @@ void WriteDataToCAN()
     // Pitch Mode
     // TODO
 
+    //
+    // Unit testing code
+    //
+    //weather_station_up = true;
+    //float time_test = (float)us_ticker_read() / 1000000.0f;
+    //sensors.wind_direction = 260.0f * sin(time_test / 10.0f);
+    //sensors.rpm_rotor = sin(time_test / 5.0f) * 400.0f + 400.0f;
+    //sensors.rpm_rotor = 350.0f;
+    //sensors.rpm_wheels = unit::getWheelRPM();
+    //wind_speed_avg = 6.0f;
+    //sensors.wind_speed = 5.0f;
+
     if(weather_station_up)
     {
       static int stop_mast_cmd = 0;
@@ -539,7 +553,7 @@ void WriteDataToCAN()
     		}
     	}
     	// Send control to the mast
-    	//pot_value = 6.0;
+    	pot_value = 15.0 * direction;
     	can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
     	wait_us(200);
 
@@ -624,7 +638,13 @@ int amain()
     static int cnt_pitch_auto = 0;
     if(cnt_pitch_auto++ >= 2)
     {
-      if(pitch_valid)
+      static bool first = true;
+      if(first)
+      {
+        first = false;
+        pitch_done = true;
+      }
+      if(pitch_valid || first)
       {
         pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
                                                        sensors.rpm_wheels,
@@ -735,7 +755,7 @@ int main()
         // Check if ROPS is on :
         if(pitch::ROPS)
         {
-          //pitch::SendROPSCmd((float)(sensors.pitch), true);
+          pitch::SendROPSCmd((float)(sensors.pitch), true);
         }
 
         //
@@ -786,7 +806,7 @@ int main()
             {
               if(pitch_valid)
               {
-                vehicle_speed = 5.0f;
+                //vehicle_speed = 5.0f;
                 pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
                                                                sensors.rpm_wheels,
                                                                sensors.wind_speed,
@@ -827,6 +847,7 @@ int main()
             pc.printf("AVG Wind speed = %f\n\r", wind_speed_avg);
             pc.printf("\n\r");
             pc.printf("Pitch = %f   raw pitch = %d\n\r", (3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch), sensors.pitch);
+            pc.printf("Nb steps = %f\n\r", global_nb_steps);
             //pc.printf("First time pitch steps = %f\n\r", delta_steps);
             //pc.printf("Current pitch for calc = %f\n\r", current_pitch);
             //pc.printf("First ever pitch = %f\n\r", first_pitch_value);
