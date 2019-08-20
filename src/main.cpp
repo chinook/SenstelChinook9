@@ -453,7 +453,7 @@ void WriteDataToCAN()
     //pitch_angle = abs(pitch_angle);
     //pitch_angle = 15.6f;
     can_success &= can.write(CANMessage(PITCH_CAN_ID, (char*)&pitch_angle, 4));
-    wait_us(200);
+    wait_us(300);
 
     // Mast dir + Mast mode
     // TODO
@@ -461,10 +461,10 @@ void WriteDataToCAN()
     // TODO
     // Rotor RPM
     can_success &= can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)&sensors.rpm_rotor, 4));
-    wait_us(200);
+    wait_us(300);
     // Wind Speed
     can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
-    wait_us(200);
+    wait_us(300);
     // Current + Voltage
     //can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
     //wait_us(200);
@@ -474,12 +474,12 @@ void WriteDataToCAN()
     // Wheel RPM
     //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
     can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&pitch_miclette_target), 4));
-    wait_us(200);
+    wait_us(300);
     // Wind dir
     //unsigned int wind_dir = (unsigned int)(sensors.wind_direction);
 
     //can_success &= can.write(CANMessage(0x20, (char*)(&sensors.wind_direction), 4));
-    wait_us(200);
+    wait_us(300);
     //wait_us(2000);
 
     // Acq Stat
@@ -555,18 +555,19 @@ void WriteDataToCAN()
     	// Send control to the mast
     	pot_value = 15.0 * direction;
     	can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-    	wait_us(200);
+    	wait_us(300);
 
       last_sign = direction;
     }
 
     // Loadcell
-    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&vehicule_efficacite), 4));
-    wait_us(200);
+    //can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&vehicule_efficacite), 4));
+    //wait_us(200);
+
     // Torque
-    int vehicule_efficacite_int = (int)vehicule_efficacite;
-    can_success &= can.write(CANMessage(0xBB, (char*)&vehicule_efficacite_int, 4));
-    wait_us(200);
+    //int vehicule_efficacite_int = (int)vehicule_efficacite;
+    //can_success &= can.write(CANMessage(0xBB, (char*)&vehicule_efficacite_int, 4));
+    //wait_us(200);
 
 
     //pc.printf("can success = %d\n\r", can_success);
