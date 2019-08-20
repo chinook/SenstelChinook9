@@ -13,7 +13,7 @@
 #include "pitch.hpp"
 #include "unit.hpp"
 
-#define LED_DEBUG
+//#define LED_DEBUG
 
 #define TIME_ACQ 50
 #define TIME_DATA_OUT 100
@@ -48,6 +48,12 @@ DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 //DigitalIn  test(PF_15);
+
+// Limit switches
+bool limit1_triggered = false;
+bool limit2_triggered = false;
+InterruptIn limit1(D8);
+InterruptIn limit2(D9);
 
 // Threads
 Thread ws_thread;
@@ -207,7 +213,9 @@ void ws_acquisition()
                 memcpy(sentence_begin, trame, 6);
                 if(!strcmp(IIMWV_str, sentence_begin))
                 {
+#ifdef LED_DEBUG
                     led1 = !led1;
+#endif
                     weather_station_up = true;
                     // Extract information
                     static char wind_dir[6] = {0};
@@ -306,6 +314,20 @@ void irq_rpm()
 void irq_wheel_rpm()
 {
     ++wheel_rpm_counter;
+}
+
+void irq_limit1()
+{
+  limit1_triggered = true;
+  led1 = !led1;
+  wait_us(10);
+}
+
+void irq_limit2()
+{
+  limit2_triggered = true;
+  led2 = !led2;
+  wait_us(10);
 }
 
 // Performs the acquisition of the sensors
@@ -499,7 +521,35 @@ void WriteDataToCAN()
     //wind_speed_avg = 6.0f;
     //sensors.wind_speed = 5.0f;
 
-    if(weather_station_up)
+    // Check for limit switches
+    bool limit_triggered = false;
+    if(limit1_triggered)
+    {
+      limit1_triggered = false;
+      limit_triggered = true;
+      float pot_value = 15.0f;
+      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+      wait_us(300);
+    }
+    else if(limit2_triggered)
+    {
+      limit2_triggered = false;
+      limit_triggered = true;
+      float pot_value = 15.0f;
+      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+      wait_us(300);
+    }
+
+    // Check time since limit was triggered/
+    // Wait one second, while turning to readjust mast
+    if(limit_triggered)
+    {
+
+    }
+
+
+
+    if(!limit_triggered && weather_station_up)
     {
       static int stop_mast_cmd = 0;
       static int last_sign = 0;
@@ -712,6 +762,12 @@ int main()
     // RPM Interrupt on pin
     rpm_pin.rise(&irq_rpm);
     wheel_rpm_pin.rise(&irq_wheel_rpm);
+
+    // Limit switch interrupt on pin
+    limit1.mode(PullDown);
+    limit2.mode(PullDown);
+    limit1.rise(&irq_limit1);
+    limit2.rise(&irq_limit2);
 
     //
     // Init modes for drives
