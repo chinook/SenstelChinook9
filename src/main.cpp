@@ -41,7 +41,7 @@
 #define LOADCELL_CAN_ID 14
 #define TORQUE_CAN_ID 15
 
-#define MAX_TURB_RPM_VALUE 600
+#define MAX_TURB_RPM_VALUE 1200
 
 // LEDs
 DigitalOut led1(LED1);
@@ -49,11 +49,9 @@ DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 //DigitalIn  test(PF_15);
 
-// Limit switches
-bool limit1_triggered = false;
-bool limit2_triggered = false;
-InterruptIn limit1(D8);
-InterruptIn limit2(D9);
+DigitalIn limit1(D8);
+DigitalIn limit2(D9);
+bool limit_triggered = false;
 
 // Threads
 Thread ws_thread;
@@ -314,20 +312,7 @@ void irq_rpm()
 void irq_wheel_rpm()
 {
     ++wheel_rpm_counter;
-}
-
-void irq_limit1()
-{
-  limit1_triggered = true;
-  led1 = !led1;
-  wait_us(10);
-}
-
-void irq_limit2()
-{
-  limit2_triggered = true;
-  led2 = !led2;
-  wait_us(10);
+    led1 = !led1;
 }
 
 // Performs the acquisition of the sensors
@@ -367,10 +352,12 @@ void main_acquisition()
         {
           //sensors.rpm_wheels = (float)wheel_rpm_counter * 1000.0f / (float)TIME_ACQ;
           sensors.rpm_wheels = (float)wheel_rpm_counter;
+          //sensors.rpm_wheels = 0.0f;
   //#ifndef WHEEL_RPM_KHZ_OUTPUT
           sensors.rpm_wheels *= 1000.0f/(float)(TIME_ACQ * cnt_wheel_rpm) * 60.0f / 48.0f;
 
   //#endif
+          sensors.rpm_wheels = (float)sensors.rpm_rotor / 3.0f;
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
         }
@@ -521,35 +508,16 @@ void WriteDataToCAN()
     //wind_speed_avg = 6.0f;
     //sensors.wind_speed = 5.0f;
 
-    // Check for limit switches
-    bool limit_triggered = false;
-    if(limit1_triggered)
+    if(limit1 || limit2)
     {
-      limit1_triggered = false;
       limit_triggered = true;
-      float pot_value = 15.0f;
-      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-      wait_us(300);
     }
-    else if(limit2_triggered)
+    else
     {
-      limit2_triggered = false;
-      limit_triggered = true;
-      float pot_value = 15.0f;
-      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-      wait_us(300);
+        limit_triggered = false;
     }
 
-    // Check time since limit was triggered/
-    // Wait one second, while turning to readjust mast
-    if(limit_triggered)
-    {
-
-    }
-
-
-
-    if(!limit_triggered && weather_station_up)
+    if(weather_station_up)
     {
       static int stop_mast_cmd = 0;
       static int last_sign = 0;
@@ -604,8 +572,15 @@ void WriteDataToCAN()
     	}
     	// Send control to the mast
     	pot_value = 15.0 * direction;
-    	can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
-    	wait_us(300);
+
+      // Check limit switches
+      if((limit1 && pot_value > 0) ||
+         (limit2 && pot_value < 0))
+      {
+        pot_value = 0.0f;
+      }
+      can_success &= can.write(CANMessage(0x56, (char*)(&pot_value), 4));
+      wait_us(300);
 
       last_sign = direction;
     }
@@ -763,11 +738,8 @@ int main()
     rpm_pin.rise(&irq_rpm);
     wheel_rpm_pin.rise(&irq_wheel_rpm);
 
-    // Limit switch interrupt on pin
     limit1.mode(PullDown);
     limit2.mode(PullDown);
-    limit1.rise(&irq_limit1);
-    limit2.rise(&irq_limit2);
 
     //
     // Init modes for drives
@@ -802,7 +774,7 @@ int main()
         //pitch::ROPS = false;
         if(sensors.rpm_rotor > MAX_TURB_RPM_VALUE)
         {
-          pitch::ROPS = true;
+          //pitch::ROPS = true;
         }
         if(volant_ROPS)
         {
@@ -867,7 +839,7 @@ int main()
                 pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
                                                                sensors.rpm_wheels,
                                                                sensors.wind_speed,
-                                                               vehicle_speed);
+                                                               vehicule_speed);
                 // Failsafe for pitch yeeting
                 if((3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch) > 15.0f)
                 {
@@ -897,6 +869,7 @@ int main()
             pc.printf("\n\r");
             pc.printf("Rotor RPM = %f rpm\n\r", sensors.rpm_rotor);
             pc.printf("Wheel RPM = %f rpm\n\r", sensors.rpm_wheels);
+            pc.printf("RPM counter = %f ticks\n\r", wheel_rpm_counter);
             pc.printf("\n\r");
             pc.printf("Wind direction = %f degs\n\r", sensors.wind_direction);
             pc.printf("AVG Wind direction = %f degs\n\r", wind_direction_avg);
@@ -924,6 +897,7 @@ int main()
             pc.printf("LoRa status        -  %s\n\r", (lora_tx_successful) ? "SUCCESS" : "FAILURE");
             pc.printf("CAN status         -  %s\n\r", (CAN_transmit_status) ? "SUCCESS" : "FAILURE");
             pc.printf("Pitch drive status -  %s\n\r", (pitch_done) ? "OK" : "NOT OK");
+            pc.printf("Limit switch       -  %s\n\r", (limit_triggered) ? "ON" : "OFF");
         }
 
         // Active looping at 5ms interval
