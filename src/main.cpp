@@ -15,6 +15,9 @@
 
 //#define LED_DEBUG
 
+// Bearing encoder vs Futek RPM for vehicle speed
+//#define ROTOR_RPM_AS_WHEEL_RPM
+
 #define TIME_ACQ 50
 #define TIME_DATA_OUT 100
 #define TIME_DATA_OUT_PITCH 200
@@ -123,6 +126,8 @@ float wind_speeds[WIND_ANGLE_SAMPLES];
 float wind_direction_avg = 0.0f;
 float wind_speed_avg = 0.0f;
 uint8_t wind_index = 0;
+
+float static_wind_avg = 0.0f;
 
 float vehicule_speed = 0.0f;
 float vehicule_efficacite = 0.0f;
@@ -357,21 +362,26 @@ void main_acquisition()
           sensors.rpm_wheels *= 1000.0f/(float)(TIME_ACQ * cnt_wheel_rpm) * 60.0f / 48.0f;
 
   //#endif
-          sensors.rpm_wheels = (float)sensors.rpm_rotor / 3.0f;
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
         }
+
+        // Use RPM rotor as vehicle speed input
+#ifdef ROTOR_RPM_AS_WHEEL_RPM
+        sensors.rpm_wheels = (float)sensors.rpm_rotor / 3.0f;
+#endif
 
         // Speed vehicle
         float diameter = 0.48;
         vehicule_speed = sensors.rpm_wheels * diameter * M_PI / 60.0f;
 
         // Vehicle efficiency
-        float static_wind = wind_speed_avg - vehicule_speed;
-        if(static_wind == 0)
+        //float static_wind = wind_speed_avg - vehicule_speed;
+        static_wind_avg = wind_speed_avg - vehicule_speed;
+        if(static_wind_avg == 0)
           vehicule_efficacite = 0.0f;
         else
-          vehicule_efficacite = 100.0f * vehicule_speed / static_wind;
+          vehicule_efficacite = 100.0f * vehicule_speed / static_wind_avg;
 
 #ifdef LED_DEBUG
         led2 = !led2;
@@ -472,7 +482,7 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)&sensors.rpm_rotor, 4));
     wait_us(300);
     // Wind Speed
-    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
+    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&static_wind_avg, 4));
     wait_us(300);
     // Current + Voltage
     //can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
@@ -482,7 +492,8 @@ void WriteDataToCAN()
     //wait_us(200);
     // Wheel RPM
     //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
-    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&pitch_miclette_target), 4));
+    //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&pitch_miclette_target), 4));
+    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&vehicule_speed), 4));
     wait_us(300);
     // Wind dir
     //unsigned int wind_dir = (unsigned int)(sensors.wind_direction);
@@ -523,9 +534,9 @@ void WriteDataToCAN()
       static int last_sign = 0;
 
       // Timings
-      static unsigned delta_time_us = 0;
-      static unsigned last_time_us = us_ticker_read();
-      unsigned current_time_us = us_ticker_read();
+      static long long delta_time_us = 0;
+      static long long last_time_us = us_ticker_read();
+      long long current_time_us = us_ticker_read();
       delta_time_us += (current_time_us - last_time_us);
       last_time_us = current_time_us;
 
@@ -553,7 +564,7 @@ void WriteDataToCAN()
         {
           //pot_value = 1.0 * direction;
           // Check if 4s have passed
-          if(delta_time_us > 10000000)
+          if(delta_time_us > 1000000)
           {
             pot_value = 1.0 * direction;
             delta_time_us = 0;
@@ -747,7 +758,7 @@ int main()
 
     // Pitch drive mode
     wait_ms(100);
-    pitch::SetMode(PITCH_AUTOMATIC);
+    pitch::SetMode(PITCH_MANUAL);
     wait_ms(1);
 
     // Mast drive mode
@@ -838,7 +849,7 @@ int main()
                 //vehicle_speed = 5.0f;
                 pitch_target = pitch::AutoPitchWheelRPM((float)sensors.pitch,
                                                                sensors.rpm_wheels,
-                                                               sensors.wind_speed,
+                                                               wind_speed_avg,//sensors.wind_speed,
                                                                vehicule_speed);
                 // Failsafe for pitch yeeting
                 if((3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch) > 15.0f)
