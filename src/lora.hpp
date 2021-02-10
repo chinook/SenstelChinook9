@@ -196,9 +196,9 @@ struct LoraData;
 #define RH_RF95_PA_DAC_DISABLE                        0x04
 #define RH_RF95_PA_DAC_ENABLE                         0x07
 
-#define RFM95_RST D9
-#define RFM95_CS  D10
-#define RFM95_INT D8
+#define RFM95_RST PB_10
+#define RFM95_CS  PB_11
+#define RFM95_INT PB_12
 
 #define RF95_FREQ 915.0 // LoRa at 915.0 MHz comm frequency
 

@@ -18,43 +18,18 @@
 // Bearing encoder vs Futek RPM for vehicle speed
 //#define ROTOR_RPM_AS_WHEEL_RPM
 
-#define TIME_ACQ 50
-#define TIME_DATA_OUT 100
-#define TIME_DATA_OUT_PITCH 200
-#define TIME_LORA_DATA_OUT 250
-
-//#define LED_DEBUG
-#define RPM_KHZ_OUTPUT
-#define WHEEL_RPM_KHZ_OUTPUT
-
-// Defines for the CAN IDs
-#define GEAR_CAN_ID 1
-#define PITCH_CAN_ID 2
-#define MAST_DIR_CAN_ID 3
-//#define MAST_MODE_CAN_ID 4
-//#define CALIB_DONE_CAN_ID 5
-#define ROTOR_RPM_CAN_ID 6
-#define WIND_SPEED_CAN_ID 7
-#define CURRENT_CAN_ID 8
-#define VOLTAGE_CAN_ID 9
-#define WHEEL_RPM_CAN_ID 10
-#define WIND_DIR_CAN_ID 11
-//#define ACQ_STAT_CAN_ID 12
-//#define PITCH_MODE_CAN_ID 13
-#define LOADCELL_CAN_ID 14
-#define TORQUE_CAN_ID 15
-
-#define MAX_TURB_RPM_VALUE 1200
-
 // LEDs
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 //DigitalIn  test(PF_15);
 
-DigitalIn limit1(D8);
-DigitalIn limit2(D9);
+DigitalIn limit1(PD_14);
+DigitalIn limit2(PD_15);
 bool limit_triggered = false;
+
+// MODE
+MODE mode = MODE_RACING;
 
 // Threads
 Thread ws_thread;
@@ -63,8 +38,8 @@ Thread data_out_thread;
 Thread lora_data_out_thread;
 
 // Analog inputs
-AnalogIn loadcell_adc(A0);
-AnalogIn torque_adc(A1);
+AnalogIn loadcell_adc(A0); // PA_3
+AnalogIn torque_adc(A1);   // PC_0
 
 // Weather Station input
 Serial weather_station(PE_8, PE_7, 4800); // RX = PE_7, TX = PE_8
@@ -73,7 +48,12 @@ Serial arduino_lora(PD_5, PD_6, 9600); // RX = PD_6, TX = PD_5d
 
 // RPM
 InterruptIn rpm_pin(PE_13);
-InterruptIn wheel_rpm_pin(PE_11);
+//InterruptIn wheel_rpm_pin(PE_11);
+InterruptIn wheel_rpm_pin(PF_14);
+
+DigitalOut stepper(PE_2);
+
+InterruptIn wheel_rpm2(PE_12);
 
 // Pitch position encoder
 //DigitalOut pitch_clock(PE_15);
@@ -149,6 +129,7 @@ void irq_rpm();
 void irq_wheel_rpm();
 void main_data_out();
 void WriteDataToCAN();
+void WriteDataToCANTest();
 
 // Pitch management functions
 void send_pitch_command(float angle);
@@ -317,7 +298,6 @@ void irq_rpm()
 void irq_wheel_rpm()
 {
     ++wheel_rpm_counter;
-    led1 = !led1;
 }
 
 // Performs the acquisition of the sensors
@@ -346,10 +326,13 @@ void main_acquisition()
           rpm_counter = 0;
         }
 
+
+
         // Wheel RPM
         // Unit testing pitch auto
         //sensors.wind_speed = unit::getWindSpeed();
         //sensors.rpm_wheels = unit::getWheelRPM();
+
 
         static int cnt_wheel_rpm = 0;
         ++cnt_wheel_rpm;
@@ -359,12 +342,19 @@ void main_acquisition()
           sensors.rpm_wheels = (float)wheel_rpm_counter;
           //sensors.rpm_wheels = 0.0f;
   //#ifndef WHEEL_RPM_KHZ_OUTPUT
-          sensors.rpm_wheels *= 1000.0f/(float)(TIME_ACQ * cnt_wheel_rpm) * 60.0f / 48.0f;
+
+
+          //sensors.rpm_wheels *= 1000.0f/(float)(TIME_ACQ * cnt_wheel_rpm) * 60.0f / 48.0f;
 
   //#endif
           wheel_rpm_counter = 0;
           cnt_wheel_rpm = 0;
         }
+
+
+        //sensors.rpm_wheels = 100.0f;
+        //sensors.rpm_wheels = (float)wheel_rpm_counter;
+        //wheel_rpm_counter = 0;
 
         // Use RPM rotor as vehicle speed input
 #ifdef ROTOR_RPM_AS_WHEEL_RPM
@@ -433,6 +423,7 @@ void main_data_out()
 
         // Out CAN
         WriteDataToCAN();
+        //WriteDataToCANTest();
 
         // Out LoRa
         // Transmit serial UART to arduino for LoRa transmission
@@ -442,6 +433,67 @@ void main_data_out()
         // TODO
 
         wait_ms(TIME_DATA_OUT);
+    }
+}
+
+void WriteDataToCANTest()
+{
+    unsigned can_success = 1;
+    float number = 1;
+
+    // Pitch = 1
+    float pitch_angle = (3.0f / 2.0f) * pitch::pitch_to_angle((float)sensors.pitch);
+    can_success &= can.write(CANMessage(PITCH_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Pitch Algorithm = 2
+    can_success &= can.write(CANMessage(PITCH_ALGO_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Rotor RPM = 3
+    can_success &= can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Wind Speed = 4
+    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Wind Dir = 5
+    can_success &= can.write(CANMessage(WIND_DIR_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Wheel RPM = 6
+    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Loadcell = 7
+    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    // Torque = 8
+    can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)(&number), 4));
+    ++number;
+    wait_us(300);
+
+    unsigned char errors = can.tderror();
+    //pc.printf("num write errors = %d\n\r", errors);
+    if(errors)
+    {
+      wait_ms(1);
+      can.frequency(250000);
+      wait_ms(1);
+      CAN_transmit_status = false;
+    }
+    else
+    {
+        CAN_transmit_status = true;
     }
 }
 
@@ -474,6 +526,10 @@ void WriteDataToCAN()
     can_success &= can.write(CANMessage(PITCH_CAN_ID, (char*)&pitch_angle, 4));
     wait_us(300);
 
+    // Pitch Algo de miclette
+    can_success &= can.write(CANMessage(PITCH_ALGO_CAN_ID, (char*)(&pitch_miclette_target), 4));
+    wait_us(300);
+
     // Mast dir + Mast mode
     // TODO
     // Calib done
@@ -481,26 +537,45 @@ void WriteDataToCAN()
     // Rotor RPM
     can_success &= can.write(CANMessage(ROTOR_RPM_CAN_ID, (char*)&sensors.rpm_rotor, 4));
     wait_us(300);
+
+    // Power
+    //float power = (sensors.rpm_rotor * 2.0f * 3.14159f / 60.0f) * sensors.torque;
+    //can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&power, 4));
+    //wait_us(300);
+
     // Wind Speed
-    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&static_wind_avg, 4));
+    can_success &= can.write(CANMessage(WIND_SPEED_CAN_ID, (char*)&sensors.wind_speed, 4));
     wait_us(300);
+
+    // Wind dir
+    can_success &= can.write(CANMessage(WIND_DIR_CAN_ID, (char*)&wind_direction_avg, 4));
+    wait_us(300);
+
     // Current + Voltage
     //can_success &= can.write(CANMessage(CURRENT_CAN_ID, (char*)&dummy_zero, 4));
     //wait_us(200);
     // Voltage
     //can_success &= can.write(CANMessage(VOLTAGE_CAN_ID, (char*)&dummy_zero, 4));
     //wait_us(200);
+
     // Wheel RPM
-    //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
-    //can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&pitch_miclette_target), 4));
-    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)(&vehicule_speed), 4));
+    can_success &= can.write(CANMessage(WHEEL_RPM_CAN_ID, (char*)&sensors.rpm_wheels, 4));
     wait_us(300);
-    // Wind dir
-    //unsigned int wind_dir = (unsigned int)(sensors.wind_direction);
 
     //can_success &= can.write(CANMessage(0x20, (char*)(&sensors.wind_direction), 4));
-    wait_us(300);
+    wait_us(200);
     //wait_us(2000);
+
+    can_success &= can.write(CANMessage(0xCC, (char*)(mode), 4));
+    wait_us(300);
+
+    // Loadcell
+    can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&sensors.loadcell), 4));
+    wait_us(300);
+
+    // Torque
+    can_success &= can.write(CANMessage(TORQUE_CAN_ID, (char*)&sensors.torque, 4));
+    wait_us(300);
 
     // Acq Stat
     // TODO
@@ -518,6 +593,10 @@ void WriteDataToCAN()
     //sensors.rpm_wheels = unit::getWheelRPM();
     //wind_speed_avg = 6.0f;
     //sensors.wind_speed = 5.0f;
+
+    //
+    //  Mast Auto
+    //
 
     if(limit1 || limit2)
     {
@@ -540,49 +619,70 @@ void WriteDataToCAN()
       delta_time_us += (current_time_us - last_time_us);
       last_time_us = current_time_us;
 
-      float abs_wind = abs(sensors.wind_direction);
-      float direction = (sensors.wind_direction >= 0) ? 1.0 : -1.0;
-      float abs_wind_avg = abs(wind_direction_avg);
-      unsigned change_dir = ((direction * last_sign) < 0) ? 1 : 0;
+      // 0.5s time rotation
+      static long long start_time_rot = us_ticker_read();
+      static long long delta_rime_rot = 0.0f;
+      static bool rotating = false;
 
-    	// Only send mast auto command if wind is above 2 knots
-    	float pot_value = 0.0f;
-    	if(wind_speed_avg > 2.0)
-    	{
-        if(change_dir || stop_mast_cmd)
+      // Calculations
+      float abs_wind = abs(sensors.wind_direction); // Delta direction in degrees
+      float direction = (sensors.wind_direction >= 0) ? 1.0 : -1.0; // Right or left
+      float abs_wind_avg = abs(wind_direction_avg); // Delta direction avg in degrees
+      unsigned change_dir = ((direction * last_sign) < 0) ? 1 : 0; // Did we change direction from last time ?
+
+      float pot_value = 0.0f;
+
+      // Perform rotation only if 2s have elapsed OR wind direction delta > 15 degs
+      // and only if wind speed > 2.0 m/s
+      //led1 = 1;
+      if(wind_speed_avg > 0.5f)
+      {
+        if(abs_wind_avg > 10.0f)
         {
-          stop_mast_cmd = 0;
-          pot_value = 0.0;
+          pot_value = 15.0f * direction;
         }
-    		else if (abs_wind < 5.0 || abs_wind_avg < 5.0)
-    		{
-          pot_value = 0.0;
-          // Check if 4s have passed
-
-    		}
-        else if(abs_wind_avg < 15.0)
+        else if(abs_wind_avg < 5.0f) // Within five degrees is good enough
         {
-          //pot_value = 1.0 * direction;
-          // Check if 4s have passed
-          if(delta_time_us > 1000000)
+          pot_value = 0.0f;
+          rotating = false;
+          delta_time_us = 0;
+        }
+        else if(delta_time_us > 3000000)
+        {
+          led2 = !led2;
+          delta_time_us = 0;
+          // Do the rotation for 0.5s
+          // Start time for a 0.5s mast rotation
+          start_time_rot = us_ticker_read();
+          rotating = true;
+        }
+        else if(rotating)
+        {
+          led1 = 1;
+          pot_value = 15.0 * direction;
+
+          // Check if enough time has elapsed
+          long long current_time_us = us_ticker_read();
+          if((current_time_us - start_time_rot) > 1000000)
           {
-            pot_value = 1.0 * direction;
-            delta_time_us = 0;
-            //pot_value = 0.0;
-            stop_mast_cmd = 1;
+            rotating = false;
           }
         }
-        //else if(abs_wind < 15.0)
-        //{
-        //
-        //}
-    		else
-    		{
-    			 pot_value = 15.0 * direction;
-    		}
-    	}
+        else
+        {
+          led1 = 0;
+          // Stop the mast
+          pot_value = 0.0f;
+        }
+      }
+      else
+      {
+        pot_value = 0.0f;
+      }
+
+      //
     	// Send control to the mast
-    	pot_value = 15.0 * direction;
+      //
 
       // Check limit switches
       if((limit1 && pot_value > 0) ||
@@ -596,15 +696,9 @@ void WriteDataToCAN()
       last_sign = direction;
     }
 
-    // Loadcell
-    //can_success &= can.write(CANMessage(LOADCELL_CAN_ID, (char*)(&vehicule_efficacite), 4));
-    //wait_us(200);
-
-    // Torque
-    //int vehicule_efficacite_int = (int)vehicule_efficacite;
-    //can_success &= can.write(CANMessage(0xBB, (char*)&vehicule_efficacite_int, 4));
-    //wait_us(200);
-
+    // Power
+    //float power = (sensors.rpm_rotor * 2.0f * 3.14159f / 60.0f) * sensors.torque;
+    //can_success &= can.write(CAN);
 
     //pc.printf("can success = %d\n\r", can_success);
 
@@ -612,7 +706,6 @@ void WriteDataToCAN()
     //pc.printf("num write errors = %d\n\r", errors);
     if(errors)
     {
-      //can.reset();
       wait_ms(1);
       can.frequency(250000);
       wait_ms(1);
@@ -695,6 +788,7 @@ int amain()
     }
 
     WriteDataToCAN();
+    //WriteDataToCANTest();
 
     /*
     float nb_steps = 100;
@@ -713,8 +807,15 @@ int amain()
 int main()
 {
     //
+    // MODE
+    //
+    mode = MODE_DEBUG;
+
+    //
     // Outputs and modules initialization
     //
+
+    stepper = 1;
 
     // CAN Init
     can.frequency(250000);
@@ -749,6 +850,9 @@ int main()
     rpm_pin.rise(&irq_rpm);
     wheel_rpm_pin.rise(&irq_wheel_rpm);
 
+    wheel_rpm2.mode(PullDown);
+    //wheel_rpm2.rise(&irq_wheel_rpm);
+
     limit1.mode(PullDown);
     limit2.mode(PullDown);
 
@@ -780,6 +884,11 @@ int main()
         // Perform security checks and validations
         //
 
+        //stepper = 0;
+        //wait_ms(10);
+        //stepper = 1;
+        //continue;
+
         // ROPS
         // TODO : Implement and test ROPS based on turbine value
         //pitch::ROPS = false;
@@ -802,9 +911,18 @@ int main()
         // CAN polling
         //
         // TODO: Find a better place (and better way ?) for CAN
+        static char msgTest[] = "allo";
+        can.write(CANMessage(0x59, msgTest, 4));
+
         static CANMessage msg;
         if(can.read(msg))
         {
+          if(msg.id == 0xC4)
+          {
+            pc.printf(clear_str);
+            uint32_t reg = *((uint32_t*)msg.data);
+            pc.printf("REG = %X", reg);
+          }
           if(msg.id == 0x39)
           {
             //pc.printf("Received ROPS message\n\r");
@@ -820,6 +938,11 @@ int main()
           if(msg.id == 0x35)
           {
             pitch_done = true;
+          }
+          if(msg.id == 0x69)
+          {
+            if(!memcmp(msg.data, "abcd", 4))
+              led3 = !led3;
           }
         }
 
@@ -869,8 +992,8 @@ int main()
 
             // Clear the screen and reset the cursor pointer
 
-            pc.printf(clear_str);
-
+            //pc.printf(clear_str);
+            /*
             // Print data to screen
             static float max_torque = 0.0f;
             if(sensors.torque > max_torque)
@@ -909,6 +1032,7 @@ int main()
             pc.printf("CAN status         -  %s\n\r", (CAN_transmit_status) ? "SUCCESS" : "FAILURE");
             pc.printf("Pitch drive status -  %s\n\r", (pitch_done) ? "OK" : "NOT OK");
             pc.printf("Limit switch       -  %s\n\r", (limit_triggered) ? "ON" : "OFF");
+            */
         }
 
         // Active looping at 5ms interval
